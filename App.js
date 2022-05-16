@@ -1,20 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import AppNavigator from "./routes/app.navigator";
+import Welcome from "./Screens/Welcome";
+import { useState, useEffect } from "react";
+import * as Location from "expo-location";
+import { LogBox } from "react-native";
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  let data = { lon: 0, lat: 0 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  useEffect(() => {
+    LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        alert(
+          "Certain features may not work correctly without GPS location active",
+          [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+        );
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+      setLocation(location.coords);
+    })();
+  }, []);
+
+  return <Welcome dataFromParent={{ location }} />;
+}
